@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Home</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <!--
+      Need a visual blank slate?
+      Remove all code in `styles.css`!
+    -->
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="script.js"></script>
+  </head>
+  <body>
+    <nav>
+      <a href="/" aria-current="page">Home</a>
+      <a href="/page2.html">Other page</a>
+    </nav>
+    <main>
+      <h1>Home page</h1>
+    </main>
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Viewer with Text Features</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #fileDisplay {
+      border: 1px solid #ccc;
+      padding: 10px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .highlighted {
+      background-color: yellow;
+    }
+    .white-box {
+      border: 1px solid #000;
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      height: 200px;
+      position: relative;
+    }
+    .floating-box {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: #f0f0f0;
+      padding: 5px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>File Viewer and Text Features</h1>
+  <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx" />
+  <div id="fileDisplay">Upload a file to display its content here.</div>
+
+  <!-- White Box for Writing -->
+  <div class="white-box">
+    <textarea id="typeBox" placeholder="Type here..." style="width: 100%; height: 100%;"></textarea>
+    <div class="floating-box">
+      <button id="savePageBtn">Save Notes</button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileDisplay = document.getElementById('fileDisplay');
+    const typeBox = document.getElementById('typeBox');
+    const savePageBtn = document.getElementById('savePageBtn');
+
+    // File Reading Functionality
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          fileDisplay.innerHTML = e.target.result
+            .split('\n')
+            .map(line => `<p>${line}</p>`)
+            .join('');
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Text-to-Speech and Word Meaning
+    fileDisplay.addEventListener('mouseup', (event) => {
+      const selection = window.getSelection();
+      const text = selection.toString().trim();
+      if (text) {
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.className = 'highlighted';
+        span.textContent = text;
+        range.deleteContents();
+        range.insertNode(span);
+
+        // Text-to-Speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        speechSynthesis.speak(utterance);
+
+        // Fetch Word Meaning for Single Word
+        if (text.split(' ').length === 1) {
+          fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${text}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data[0] && data[0].meanings) {
+                const meaning = data[0].meanings[0]?.definitions[0]?.definition || 'No definition found';
+                alert(`Definition of ${text}: ${meaning}`);
+              }
+            })
+            .catch(() => alert('Error fetching word meaning.'));
+        }
+      }
+    });
+
+    // Save Notes Functionality
+    savePageBtn.addEventListener('click', () => {
+      const notes = typeBox.value;
+      const blob = new Blob([notes], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'notes.txt';
+      a.click();
+    });
+  </script>
+</body>
+</html>
